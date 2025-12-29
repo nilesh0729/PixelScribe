@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	db "github.com/nilesh0729/PixelScribe/Result"
 	mockdb "github.com/nilesh0729/PixelScribe/Result/mock"
+	"github.com/nilesh0729/PixelScribe/token"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -20,15 +21,22 @@ import (
 func TestDeleteDictation(t *testing.T) {
 	dictationID := int64(10)
 
+	// User for auth
+	user, _ := randomUserForLogin(t)
+
 	testCases := []struct {
 		name          string
 		dictationID   int64
+		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:        "OK",
 			dictationID: dictationID,
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					DeleteDictationTx(gomock.Any(), gomock.Eq(dictationID)).
@@ -42,6 +50,9 @@ func TestDeleteDictation(t *testing.T) {
 		{
 			name:        "InternalError",
 			dictationID: dictationID,
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					DeleteDictationTx(gomock.Any(), gomock.Eq(dictationID)).
@@ -54,14 +65,14 @@ func TestDeleteDictation(t *testing.T) {
 		},
 		{
 			name:        "InvalidID",
-			dictationID: 0, // Should be caught by bind uri? DELETE /dictations/:id
-			// If ID is 0, logic depends. Assuming > 0 requirement or just passed through.
-			// Gin bind uri "id,min=1" logic? api/server.go:167 bind `uri:"id" binding:"required,min=1"`
+			dictationID: 0, 
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				// No calls expected
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				// We need to send request with 0
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
@@ -82,6 +93,7 @@ func TestDeleteDictation(t *testing.T) {
 			request, err := http.NewRequest(http.MethodDelete, url, nil)
 			require.NoError(t, err)
 
+			tc.setupAuth(t, request, server.TokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			tc.checkResponse(t, recorder)
 		})
@@ -100,9 +112,13 @@ func TestCreateDictation(t *testing.T) {
 		CreatedAt: time.Now(),
 	}
 
+	// User for auth
+	user, _ := randomUserForLogin(t)
+
 	testCases := []struct {
 		name          string
 		body          gin.H
+		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
@@ -114,6 +130,9 @@ func TestCreateDictation(t *testing.T) {
 				"type":     "text",
 				"content":  "Content",
 				"language": "en-US",
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				arg := db.CreateTextDictationsParams{
@@ -150,6 +169,7 @@ func TestCreateDictation(t *testing.T) {
 			request, err := http.NewRequest(http.MethodPost, "/dictations", bytes.NewReader(data))
 			require.NoError(t, err)
 
+			tc.setupAuth(t, request, server.TokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			tc.checkResponse(t, recorder)
 		})

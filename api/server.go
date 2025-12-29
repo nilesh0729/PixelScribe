@@ -1,37 +1,56 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	db "github.com/nilesh0729/PixelScribe/Result"
+	"github.com/nilesh0729/PixelScribe/token"
+	"github.com/nilesh0729/PixelScribe/util"
 )
 
 type Server struct {
-	store  db.Store
-	router *gin.Engine
+	config     util.Config
+	store      db.Store
+	TokenMaker token.Maker
+	router     *gin.Engine
 }
 
-func NewServer(store db.Store) *Server {
-	server := &Server{store: store}
+func NewServer(config util.Config, store db.Store) (*Server, error) {
+	tokenMaker, err := token.NewJWTMaker(config.TokenSymmetricKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token maker: %w", err)
+	}
+
+	server := &Server{
+		config:     config,
+		store:      store,
+		TokenMaker: tokenMaker,
+	}
 	router := gin.Default()
 
 	router.POST("/users", server.createUser)
-	router.GET("/users/:username", server.getUser)
+	router.POST("/users/login", server.loginUser)
 
-	router.POST("/dictations", server.createDictation)
-	router.GET("/dictations", server.listDictations)
-	router.DELETE("/dictations/:id", server.deleteDictation)
+	authRoutes := router.Group("/").Use(authMiddleware(server.TokenMaker))
 
-	router.POST("/attempts", server.submitAttempt)
-	router.GET("/attempts", server.listAttempts)
+	authRoutes.GET("/users/:username", server.getUser)
 
-	router.GET("/settings", server.getSettings)
-	router.PUT("/settings", server.updateSettings)
+	authRoutes.POST("/dictations", server.createDictation)
+	authRoutes.GET("/dictations", server.listDictations)
+	authRoutes.DELETE("/dictations/:id", server.deleteDictation)
 
-	router.GET("/performance", server.listPerformance)
-	router.GET("/performance/recent", server.getOverallPerformance)
+	authRoutes.POST("/attempts", server.submitAttempt)
+	authRoutes.GET("/attempts", server.listAttempts)
+
+	authRoutes.GET("/settings", server.getSettings)
+	authRoutes.PUT("/settings", server.updateSettings)
+
+	authRoutes.GET("/performance", server.listPerformance)
+	authRoutes.GET("/performance/recent", server.getOverallPerformance)
 
 	server.router = router
-	return server
+	return server, nil
 }
 
 func (server *Server) Start(address string) error {

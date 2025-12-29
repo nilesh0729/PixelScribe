@@ -6,14 +6,22 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	db "github.com/nilesh0729/PixelScribe/Result"
+	"github.com/nilesh0729/PixelScribe/util"
 	"github.com/stretchr/testify/require"
 )
 
 func newTestServer(t *testing.T, store db.Store) *Server {
-	server := NewServer(store)
+	config := util.Config{
+		TokenSymmetricKey:   util.RandomString(32),
+		AccessTokenDuration: time.Minute,
+	}
+
+	server, err := NewServer(config, store)
+	require.NoError(t, err)
 	return server
 }
 

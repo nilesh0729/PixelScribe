@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	db "github.com/nilesh0729/PixelScribe/Result"
 	mockdb "github.com/nilesh0729/PixelScribe/Result/mock"
+	"github.com/nilesh0729/PixelScribe/token"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -27,15 +28,22 @@ func TestGetSettings(t *testing.T) {
 		CreatedAt:             sql.NullTime{Time: time.Now(), Valid: true},
 	}
 
+	// User for auth
+	user, _ := randomUserForLogin(t)
+
 	testCases := []struct {
 		name          string
 		userID        int64
+		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:   "OK",
 			userID: 1,
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetSettingByUserID(gomock.Any(), gomock.Eq(sql.NullInt64{Int64: 1, Valid: true})).
@@ -49,6 +57,9 @@ func TestGetSettings(t *testing.T) {
 		{
 			name:   "NotFound",
 			userID: 2,
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					GetSettingByUserID(gomock.Any(), gomock.Eq(sql.NullInt64{Int64: 2, Valid: true})).
@@ -76,6 +87,7 @@ func TestGetSettings(t *testing.T) {
 			request, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
 
+			tc.setupAuth(t, request, server.TokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			tc.checkResponse(t, recorder)
 		})
@@ -95,9 +107,14 @@ func TestUpdateSettings(t *testing.T) {
 		DefaultVoice: sql.NullString{String: "new-voice", Valid: true},
 	}
 
+	
+	// User for auth
+	user, _ := randomUserForLogin(t)
+
 	testCases := []struct {
 		name          string
 		body          gin.H
+		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
@@ -106,6 +123,9 @@ func TestUpdateSettings(t *testing.T) {
 			body: gin.H{
 				"user_id":       1,
 				"default_voice": "new-voice",
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				// 1. Get existing
@@ -151,6 +171,7 @@ func TestUpdateSettings(t *testing.T) {
 			request, err := http.NewRequest(http.MethodPut, "/settings", bytes.NewReader(data))
 			require.NoError(t, err)
 
+			tc.setupAuth(t, request, server.TokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			tc.checkResponse(t, recorder)
 		})

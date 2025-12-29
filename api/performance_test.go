@@ -10,6 +10,7 @@ import (
 
 	db "github.com/nilesh0729/PixelScribe/Result"
 	mockdb "github.com/nilesh0729/PixelScribe/Result/mock"
+	"github.com/nilesh0729/PixelScribe/token"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -25,15 +26,22 @@ func TestListPerformance(t *testing.T) {
 		},
 	}
 
+	// User for auth
+	user, _ := randomUserForLogin(t)
+
 	testCases := []struct {
 		name          string
 		userID        int64
+		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:   "OK",
 			userID: 1,
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					ListPerformanceSummaryByUser(gomock.Any(), gomock.Eq(sql.NullInt64{Int64: 1, Valid: true})).
@@ -61,6 +69,7 @@ func TestListPerformance(t *testing.T) {
 			request, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
 
+			tc.setupAuth(t, request, server.TokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			tc.checkResponse(t, recorder)
 		})
