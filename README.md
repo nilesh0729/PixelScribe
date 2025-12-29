@@ -1,9 +1,37 @@
 # PixelScribe 🎙️
 
-PixelScribe is a modern, high-performance web application designed to help users improve their typing speed and accuracy through dictation practice. It features real-time audio generation (TTS), server-side accuracy verification, and detailed performance analytics.
+[![Go Tests](https://github.com/nilesh0729/PixelScribe/actions/workflows/test.yml/badge.svg)](https://github.com/nilesh0729/PixelScribe/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-![Dashboard](https://via.placeholder.com/800x400?text=PixelScribe+Dashboard)
-*(Replace with actual screenshot)*
+PixelScribe is a modern, high-performance web application designed to help users improve their typing speed and accuracy through dictation practice. It features real-time audio generation using OpenAI's TTS API, server-side accuracy verification, and comprehensive performance analytics.
+
+## 📋 Table of Contents
+
+- [Screenshots](#-screenshots)
+- [Features](#-features)
+- [Tech Stack](#️-tech-stack)
+- [Installation & Setup](#-installation--setup)
+- [Project Structure](#-project-structure)
+- [API Documentation](#️-api-documentation)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+## 📸 Screenshots
+
+![Sign In Page](screenshots/signin.png)
+*Sign in to your account*
+
+![Registration Page](screenshots/register.png)
+*Create a new account*
+
+![Dashboard](screenshots/dashboard.png)
+*Overview of your dictation performance with stats and recent activity*
+
+![New Dictation](screenshots/new-dictation.png)
+*Create a new dictation with customizable title, language, and content*
+
+![Attempt History](screenshots/history.png)
+*Track your progress with detailed attempt history*
 
 ## 🚀 Features
 
@@ -127,3 +155,15 @@ The API is RESTful and communicates via JSON. Key endpoints include:
 ## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
+
+## 🙏 Acknowledgments
+
+- **OpenAI** - For providing the high-quality TTS API
+- **Go Community** - For the excellent tooling and libraries
+- **React & Tailwind CSS** - For making frontend development enjoyable
+
+---
+
+<div align="center">
+  Made with ❤️ by <a href="https://github.com/nilesh0729">Nilesh Khodiyar</a>
+</div>
