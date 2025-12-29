@@ -261,18 +261,18 @@ func (mr *MockStoreMockRecorder) DeleteUsers(ctx, username any) *gomock.Call {
 }
 
 // GetAttemptById mocks base method.
-func (m *MockStore) GetAttemptById(ctx context.Context, arg db.GetAttemptByIdParams) (db.Attempt, error) {
+func (m *MockStore) GetAttemptById(ctx context.Context, id int64) (db.Attempt, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAttemptById", ctx, arg)
+	ret := m.ctrl.Call(m, "GetAttemptById", ctx, id)
 	ret0, _ := ret[0].(db.Attempt)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAttemptById indicates an expected call of GetAttemptById.
-func (mr *MockStoreMockRecorder) GetAttemptById(ctx, arg any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetAttemptById(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAttemptById", reflect.TypeOf((*MockStore)(nil).GetAttemptById), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAttemptById", reflect.TypeOf((*MockStore)(nil).GetAttemptById), ctx, id)
 }
 
 // GetDictationsByTitle mocks base method.

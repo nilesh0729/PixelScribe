@@ -71,15 +71,7 @@ func TestGetAttemptById(t *testing.T) {
 	dict := RandomTextDictation(t, user)
 	attempt := createRandomAttempt(t, user.ID, dict.ID)
 
-	result, err := testQueries.GetAttemptById(context.Background(),
-		GetAttemptByIdParams{
-			UserID: sql.NullInt64{Int64: user.ID, Valid: true},
-			DictationID: sql.NullInt64{
-				Int64: dict.ID,
-				Valid: true,
-			},
-		},
-	)
+	result, err := testQueries.GetAttemptById(context.Background(), attempt.ID)
 
 	require.NoError(t, err)
 	require.Equal(t, attempt.ID, result.ID)
@@ -164,15 +156,7 @@ func TestDeleteAttempt(t *testing.T) {
 	require.NoError(t, err)
 
 	// Now check it is gone
-	res, err := testQueries.GetAttemptById(context.Background(),
-		GetAttemptByIdParams{
-			UserID: sql.NullInt64{Int64: user.ID, Valid: true},
-			DictationID: sql.NullInt64{
-				Int64: dict.ID,
-				Valid: true,
-			},
-		},
-	)
+	res, err := testQueries.GetAttemptById(context.Background(), attempt.ID)
 
 	require.Error(t, err)
 	require.Equal(t, sql.ErrNoRows.Error(), err.Error())
