@@ -107,10 +107,10 @@ PixelScribe is a modern, high-performance web application designed to help users
 ### Local Development (Manual)
 
 #### Backend
-1.  Navigate to `/api` or root.
+1.  Navigate to project root.
 2.  Install dependencies: `go mod download`.
 3.  Run migrations (using `migrate` CLI or via Make).
-4.  Start server: `go run main.go`.
+4.  Start server: `go run ./cmd/api`.
 
 #### Frontend
 1.  Navigate to `/web`.
@@ -121,18 +121,32 @@ PixelScribe is a modern, high-performance web application designed to help users
 
 ```
 PixelScribe/
-├── api/                # Go Backend Handlers & Logic
-├── Result/             # SQLC Generated Code (DB Layer)
-├── db/                 # SQL Migration Files
-├── web/                # React Frontend Application
+├── cmd/
+│   └── api/
+│       └── main.go         # Application entry point
+├── internal/               # Private application code
+│   ├── api/                # HTTP handlers & routing
+│   ├── db/
+│   │   ├── sqlc/           # SQLC generated code
+│   │   └── mock/           # Mock database interfaces
+│   ├── token/              # JWT token logic
+│   └── util/               # Utility functions
+├── db/                     # Database files
+│   ├── query/              # SQL query files
+│   └── migration/          # Database migrations
+├── web/                    # React frontend application
 │   ├── src/
 │   │   ├── components/
 │   │   ├── pages/
-│   │   ├── services/   # API Clients
+│   │   ├── services/       # API clients
 │   │   └── ...
-├── app.env             # Environment Secrets (GitIgnored)
-├── docker-compose.yaml # Docker Orchestration
-└── ...
+├── screenshots/            # README screenshots
+├── .github/workflows/      # CI/CD workflows
+├── docker-compose.yaml     # Docker orchestration
+├── Dockerfile              # Backend container
+├── Makefile                # Build and development tasks
+├── sqlc.yaml               # SQLC configuration
+└── README.md
 ```
 
 ## 🛡️ API Documentation
