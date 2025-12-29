@@ -70,7 +70,7 @@ func TestSubmitAttempt(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				arg := db.CreateAttemptsParams{
-					UserID:            sql.NullInt64{Int64: 1, Valid: true},
+					UserID:            sql.NullInt64{Int64: 0, Valid: true},
 					DictationID:       sql.NullInt64{Int64: 1, Valid: true},
 					TypedText:         sql.NullString{String: "Hello world", Valid: true},
 					TotalWords:        sql.NullInt32{Int32: 2, Valid: true},

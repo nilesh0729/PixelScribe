@@ -136,7 +136,7 @@ func TestCreateDictation(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				arg := db.CreateTextDictationsParams{
-					UserID:   sql.NullInt64{Int64: 1, Valid: true},
+					UserID:   sql.NullInt64{Int64: 0, Valid: true},
 					Title:    sql.NullString{String: "Test Dictation", Valid: true},
 					Content:  sql.NullString{String: "Content", Valid: true},
 					Language: sql.NullString{String: "en-US", Valid: true},
