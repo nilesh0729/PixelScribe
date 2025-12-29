@@ -275,6 +275,21 @@ func (mr *MockStoreMockRecorder) GetAttemptById(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAttemptById", reflect.TypeOf((*MockStore)(nil).GetAttemptById), ctx, id)
 }
 
+// GetDictation mocks base method.
+func (m *MockStore) GetDictation(ctx context.Context, id int64) (db.Dictation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDictation", ctx, id)
+	ret0, _ := ret[0].(db.Dictation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDictation indicates an expected call of GetDictation.
+func (mr *MockStoreMockRecorder) GetDictation(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDictation", reflect.TypeOf((*MockStore)(nil).GetDictation), ctx, id)
+}
+
 // GetDictationsByTitle mocks base method.
 func (m *MockStore) GetDictationsByTitle(ctx context.Context, title sql.NullString) (db.Dictation, error) {
 	m.ctrl.T.Helper()
