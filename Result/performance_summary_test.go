@@ -11,9 +11,10 @@ import (
 )
 
 func createRandomPerformanceSummary(t *testing.T) PerformanceSummary {
+	user := RandomUser(t)
 	arg := CreatePerformanceSummaryParams{
-		UserID:        sql.NullInt64{Int64: util.RandomInt(1,9), Valid: true},
-		DictationID:   sql.NullInt64{Int64: util.RandomInt(1,9), Valid: true},
+		UserID:        sql.NullInt64{Int64: user.ID, Valid: true},
+		DictationID:   sql.NullInt64{Int64: util.RandomInt(1,9), Valid: true}, // Dictation creation optional for this test unless FK needed
 		TotalAttempts: sql.NullInt32{Int32: 1, Valid: true},
 		BestAccuracy: sql.NullFloat64{
 			Float64: 92.5,
@@ -98,12 +99,22 @@ func TestUpdatePerformanceSummary(t *testing.T) {
 }
 
 func TestListPerformanceSummaryByUser(t *testing.T) {
-	userID := sql.NullInt64{Int64: 1, Valid: true}
+	// Create a real user first
+	user := RandomUser(t)
+	userID := sql.NullInt64{Int64: user.ID, Valid: true}
 
-	// create multiple summaries
-	for i := 0; i < 5; i++ {
-		createRandomPerformanceSummary(t)
+	// Create a performance summary specifically for this user
+	arg := CreatePerformanceSummaryParams{
+		UserID:        userID,
+		DictationID:   sql.NullInt64{Int64: util.RandomInt(1, 9), Valid: true},
+		TotalAttempts: sql.NullInt32{Int32: 1, Valid: true},
+		BestAccuracy:  sql.NullFloat64{Float64: 90.0, Valid: true},
+		AverageAccuracy: sql.NullFloat64{Float64: 90.0, Valid: true},
+		AverageTime:     sql.NullFloat64{Float64: 10.0, Valid: true},
+		LastAttemptAt:   sql.NullTime{Time: time.Now(), Valid: true},
 	}
+	_, err := testQueries.CreatePerformanceSummary(context.Background(), arg)
+	require.NoError(t, err)
 
 	list, err := testQueries.ListPerformanceSummaryByUser(context.Background(), userID)
 	require.NoError(t, err)
@@ -113,10 +124,23 @@ func TestListPerformanceSummaryByUser(t *testing.T) {
 }
 
 func TestRecentAttemptsByUser(t *testing.T) {
-	userID := sql.NullInt64{Int64: 1, Valid: true}
+	// Create a real user first
+	user := RandomUser(t)
+	userID := sql.NullInt64{Int64: user.ID, Valid: true}
 
-	for i := 0; i < 4; i++ {
-		createRandomPerformanceSummary(t)
+	// Create 2 records specifically for this user
+	for i := 0; i < 2; i++ {
+		arg := CreatePerformanceSummaryParams{
+			UserID:        userID,
+			DictationID:   sql.NullInt64{Int64: util.RandomInt(1, 9), Valid: true},
+			TotalAttempts: sql.NullInt32{Int32: 1, Valid: true},
+			BestAccuracy:  sql.NullFloat64{Float64: 90.0, Valid: true},
+			AverageAccuracy: sql.NullFloat64{Float64: 90.0, Valid: true},
+			AverageTime:     sql.NullFloat64{Float64: 10.0, Valid: true},
+			LastAttemptAt:   sql.NullTime{Time: time.Now(), Valid: true},
+		}
+		_, err := testQueries.CreatePerformanceSummary(context.Background(), arg)
+		require.NoError(t, err)
 	}
 
 	recent, err := testQueries.RecentAttemptsByUser(context.Background(), RecentAttemptsByUserParams{
@@ -124,7 +148,7 @@ func TestRecentAttemptsByUser(t *testing.T) {
 		Limit:  2,
 	})
 	require.NoError(t, err)
-	require.Len(t, recent, 2) // Should return only requested limit
+	require.Len(t, recent, 2)
 }
 
 func TestDeletePerformanceSummary(t *testing.T) {
