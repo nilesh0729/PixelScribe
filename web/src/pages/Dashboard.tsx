@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { performanceService } from '../services/performance';
 import type { PerformanceSummary } from '../types/performance';
-import { unwrap } from '../types/common';
+
 import { Activity, Trophy, Clock, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -20,8 +20,8 @@ export default function Dashboard() {
                         performanceService.getPerformance(user.id),
                         performanceService.getRecentActivity(user.id, 5)
                     ]);
-                    setSummaries(perfData);
-                    setRecent(recentData);
+                    setSummaries(perfData || []);
+                    setRecent(recentData || []);
                 } catch (error) {
                     console.error("Failed to fetch dashboard data", error);
                 } finally {
@@ -33,12 +33,13 @@ export default function Dashboard() {
     }, [user]);
 
     // Calculate generic stats
-    const totalAttempts = summaries.reduce((acc, curr) => acc + unwrap(curr.total_attempts, 'Int32', 0), 0);
+    const safeSummaries = summaries || [];
+    const totalAttempts = safeSummaries.reduce((acc, curr) => acc + (curr.total_attempts || 0), 0);
 
-    const totalAccuracy = summaries.reduce((acc, curr) => acc + unwrap(curr.average_accuracy, 'Float64', 0), 0);
-    const avgAccuracy = summaries.length > 0 ? totalAccuracy / summaries.length : 0;
+    const totalAccuracy = safeSummaries.reduce((acc, curr) => acc + (curr.average_accuracy || 0), 0);
+    const avgAccuracy = safeSummaries.length > 0 ? totalAccuracy / safeSummaries.length : 0;
 
-    const bestAccuracyEver = summaries.reduce((max, curr) => Math.max(max, unwrap(curr.best_accuracy, 'Float64', 0)), 0);
+    const bestAccuracyEver = safeSummaries.reduce((max, curr) => Math.max(max, (curr.best_accuracy || 0)), 0);
 
     return (
         <div className="space-y-6">
@@ -121,20 +122,20 @@ export default function Dashboard() {
                                     <div className="flex items-center justify-between">
                                         <div className="flex flex-col">
                                             <p className="text-sm font-medium text-indigo-600 truncate">
-                                                Dictation #{unwrap(item.dictation_id, 'Int64', 0)}
+                                                Dictation #{item.dictation_id || 0}
                                             </p>
                                             <p className="flex items-center text-sm text-gray-500 mt-1">
                                                 <Clock className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                                                {unwrap(item.last_attempt_at, 'Time', '') ? new Date(unwrap(item.last_attempt_at, 'Time', '')).toLocaleDateString() : 'Unknown date'}
+                                                {item.last_attempt_at ? new Date(item.last_attempt_at).toLocaleDateString() : 'Unknown date'}
                                             </p>
                                         </div>
                                         <div className="flex items-center">
                                             <div className="flex flex-col items-end">
                                                 <p className="text-sm font-medium text-gray-900">
-                                                    {unwrap(item.average_accuracy, 'Float64', 0).toFixed(1)}% Acc
+                                                    {(item.average_accuracy || 0).toFixed(1)}% Acc
                                                 </p>
                                                 <p className="text-xs text-gray-500 mt-1">
-                                                    {unwrap(item.total_attempts, 'Int32', 0)} attempts
+                                                    {item.total_attempts || 0} attempts
                                                 </p>
                                             </div>
                                         </div>

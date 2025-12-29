@@ -7,7 +7,7 @@ export default function CreateDictation() {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
-        type: 'General',
+        type: 'text',
         content: '',
         language: 'en-US',
     });
@@ -55,31 +55,13 @@ export default function CreateDictation() {
                                     required
                                     value={formData.title}
                                     onChange={handleChange}
-                                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
+                                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border text-gray-900"
                                     placeholder="e.g., The Quick Brown Fox"
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-                                Type
-                            </label>
-                            <div className="mt-1">
-                                <select
-                                    id="type"
-                                    name="type"
-                                    value={formData.type}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
-                                >
-                                    <option>General</option>
-                                    <option>Legal</option>
-                                    <option>Medical</option>
-                                    <option>Code</option>
-                                </select>
-                            </div>
-                        </div>
+
 
                         <div>
                             <label htmlFor="language" className="block text-sm font-medium text-gray-700">
@@ -91,7 +73,7 @@ export default function CreateDictation() {
                                     name="language"
                                     value={formData.language}
                                     onChange={handleChange}
-                                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
+                                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border text-gray-900"
                                 >
                                     <option value="en-US">English (US)</option>
                                     <option value="en-GB">English (UK)</option>
@@ -111,7 +93,7 @@ export default function CreateDictation() {
                                     required
                                     value={formData.content}
                                     onChange={handleChange}
-                                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
+                                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border text-gray-900"
                                     placeholder="Type or paste the text for dictation here..."
                                 />
                             </div>

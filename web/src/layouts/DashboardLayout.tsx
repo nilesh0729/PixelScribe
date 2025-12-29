@@ -15,12 +15,20 @@ export default function DashboardLayout() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
                         <div className="flex">
-                            <div className="flex-shrink-0 flex items-center">
+                            <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => window.location.href = '/'}>
                                 <span className="text-xl font-bold text-indigo-600">PixelScribe</span>
+                            </div>
+                            <div className="hidden md:ml-6 md:flex md:space-x-8">
+                                <a href="/" className="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                    Dashboard
+                                </a>
+                                <a href="/attempts" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                    History
+                                </a>
                             </div>
                         </div>
                         <div className="flex items-center">
-                            <span className="text-gray-700 mr-4">Welcome, {user?.full_name || user?.username}</span>
+                            <span className="text-gray-700 mr-4">Welcome, {user?.name || user?.username}</span>
                             <button
                                 onClick={logout}
                                 className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

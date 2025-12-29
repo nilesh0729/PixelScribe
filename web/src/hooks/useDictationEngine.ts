@@ -1,119 +1,111 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { ttsService } from '../services/tts';
 
-export interface GameState {
-    status: 'idle' | 'playing' | 'paused' | 'completed';
-    currentText: string;
-    targetText: string;
-    wpm: number;
-    accuracy: number;
-    startTime: number | null;
-    endTime: number | null;
-    errors: number;
-}
+export type DictationPhase = 'loading' | 'listening' | 'typing' | 'completed';
 
-export function useDictationEngine(targetContent: string, language: string = 'en-US') {
-    const [status, setStatus] = useState<'idle' | 'playing' | 'paused' | 'completed'>('idle');
+export function useDictationEngine(targetContent: string) {
+    const [phase, setPhase] = useState<DictationPhase>('loading');
     const [currentText, setCurrentText] = useState('');
     const [startTime, setStartTime] = useState<number | null>(null);
     const [endTime, setEndTime] = useState<number | null>(null);
 
-    // TTS State
-    const synth = window.speechSynthesis;
-    const utterance = useRef<SpeechSynthesisUtterance | null>(null);
+    // Audio State
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const [audioUrl, setAudioUrl] = useState<string | null>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
 
+    // Load Audio
     useEffect(() => {
-        utterance.current = new SpeechSynthesisUtterance(targetContent);
-        utterance.current.lang = language;
-        utterance.current.rate = 0.9; // Slightly slower for dictation
+        let active = true;
+        const loadAudio = async () => {
+            if (!targetContent) return;
+            setPhase('loading');
+            try {
+                const blob = await ttsService.generateAudio(targetContent);
+                if (active) {
+                    const url = URL.createObjectURL(blob);
+                    setAudioUrl(url);
+                    audioRef.current = new Audio(url);
 
-        // Cleanup
-        return () => {
-            if (synth.speaking) {
-                synth.cancel();
+                    audioRef.current.onended = () => setIsPlaying(false);
+                    audioRef.current.onplay = () => setIsPlaying(true);
+                    audioRef.current.onpause = () => setIsPlaying(false);
+
+                    setPhase('listening');
+                }
+            } catch (error) {
+                console.error("Failed to load TTS", error);
+                // Even if audio fails, allow typing? Or show error?
+                setPhase('listening');
             }
         };
-    }, [targetContent, language]);
+        loadAudio();
 
-    const start = useCallback(() => {
-        if (status === 'completed') {
-            setCurrentText('');
-            setStartTime(Date.now());
-            setStatus('playing');
-            synth.cancel();
-            synth.speak(utterance.current!);
-            return;
-        }
-
-        if (status === 'idle') {
-            setStartTime(Date.now());
-        }
-
-        setStatus('playing');
-        if (utterance.current) {
-            // If paused, resume logic implies either resume() or re-speak from index.
-            // Web Speech API pause/resume is flaky. Better to just speak.
-            if (synth.paused) {
-                synth.resume();
-            } else if (!synth.speaking) {
-                synth.speak(utterance.current);
+        return () => {
+            active = false;
+            if (audioUrl) URL.revokeObjectURL(audioUrl);
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
             }
-        }
-    }, [status, targetContent]);
+        };
+    }, [targetContent]);
 
-    const pause = useCallback(() => {
-        setStatus('paused');
-        synth.pause();
+    // Audio Controls
+    const playAudio = useCallback(() => {
+        audioRef.current?.play();
     }, []);
 
-    const stop = useCallback(() => {
-        setStatus('idle');
-        synth.cancel();
+    const pauseAudio = useCallback(() => {
+        audioRef.current?.pause();
+    }, []);
+
+    const replayAudio = useCallback(() => {
+        if (audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play();
+        }
+    }, []);
+
+    // Workflow Controls
+    const startTyping = useCallback(() => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+        }
+        setPhase('typing');
+        setStartTime(Date.now());
         setCurrentText('');
-        setStartTime(null);
     }, []);
 
     const handleInput = useCallback((text: string) => {
-        if (status !== 'playing') return;
-
         setCurrentText(text);
+    }, []);
 
-        // Auto-complete check
-        if (text.length >= targetContent.length) {
-            // Simple finish condition
-            setStatus('completed');
-            setEndTime(Date.now());
-            synth.cancel();
-        }
-    }, [status, targetContent]);
+    const complete = useCallback(() => {
+        setEndTime(Date.now());
+        setPhase('completed');
+    }, []);
 
-    // Calculations
-    const durationInMinutes = ((endTime || Date.now()) - (startTime || Date.now())) / 60000;
-    // Standard WPM = (characters / 5) / minutes
-    const wpm = durationInMinutes > 0 ? (currentText.length / 5) / durationInMinutes : 0;
-
-    // Simple Levenshtein or character matching could go here, 
-    // currently just simple length/match ratio for "accuracy" placeholder
-    const calculateAccuracy = () => {
-        if (currentText.length === 0) return 100;
-        let correctChars = 0;
-        const len = Math.min(currentText.length, targetContent.length);
-        for (let i = 0; i < len; i++) {
-            if (currentText[i] === targetContent[i]) correctChars++;
-        }
-        return (correctChars / currentText.length) * 100;
-    };
+    // Simple time tracking (seconds)
+    const timeSpentSeconds = startTime ? ((endTime || Date.now()) - startTime) / 1000 : 0;
 
     return {
-        status,
+        phase,
         currentText,
-        start,
-        pause,
-        stop,
-        handleInput,
+        audioState: {
+            isPlaying,
+            play: playAudio,
+            pause: pauseAudio,
+            replay: replayAudio
+        },
+        controls: {
+            startTyping,
+            handleInput,
+            complete
+        },
         stats: {
-            wpm: Math.round(wpm),
-            accuracy: Math.round(calculateAccuracy()),
-            progress: (currentText.length / targetContent.length) * 100
+            timeSpent: timeSpentSeconds
         }
     };
 }

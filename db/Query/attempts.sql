@@ -26,9 +26,7 @@ RETURNING *;
 
 -- name: GetAttemptById :one
 SELECT * FROM attempts
-WHERE user_id = $1
-    AND dictation_id = $2 
-LIMIT 1;
+WHERE id = $1 LIMIT 1;
 
 -- name: ListAttemptsByUser :many
 SELECT * FROM attempts

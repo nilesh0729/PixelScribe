@@ -1,4 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import AttemptHistory from './pages/AttemptHistory';
+import AttemptDetails from './pages/AttemptDetails';
 import AuthLayout from './layouts/AuthLayout';
 import DashboardLayout from './layouts/DashboardLayout';
 import Login from './pages/Login';
@@ -22,6 +24,8 @@ function App() {
         <Route path="dictations" element={<DictationList />} />
         <Route path="dictations/new" element={<CreateDictation />} />
         <Route path="play/:id" element={<PlayDictation />} />
+        <Route path="attempts" element={<AttemptHistory />} />
+        <Route path="attempts/:id" element={<AttemptDetails />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

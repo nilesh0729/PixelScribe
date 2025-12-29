@@ -118,6 +118,28 @@ func (q *Queries) DeleteDictations(ctx context.Context, title sql.NullString) er
 	return err
 }
 
+const getDictation = `-- name: GetDictation :one
+SELECT id, user_id, title, type, content, audio_url, language, created_at, updated_at FROM dictations
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetDictation(ctx context.Context, id int64) (Dictation, error) {
+	row := q.db.QueryRowContext(ctx, getDictation, id)
+	var i Dictation
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Title,
+		&i.Type,
+		&i.Content,
+		&i.AudioUrl,
+		&i.Language,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getDictationsByTitle = `-- name: GetDictationsByTitle :one
 SELECT id, user_id, title, type, content, audio_url, language, created_at, updated_at FROM dictations
 WHERE title = $1 LIMIT 1

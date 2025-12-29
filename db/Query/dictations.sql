@@ -31,6 +31,10 @@ RETURNING *;
 SELECT * FROM dictations
 WHERE title = $1 LIMIT 1;
 
+-- name: GetDictation :one
+SELECT * FROM dictations
+WHERE id = $1 LIMIT 1;
+
 -- name: ListDictationsByUser :many
 SELECT * FROM dictations
 WHERE user_id = $1

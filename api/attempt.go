@@ -4,19 +4,22 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+    "fmt"
 	"net/http"
+    "strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sqlc-dev/pqtype"
 	db "github.com/nilesh0729/PixelScribe/Result"
+    "github.com/nilesh0729/PixelScribe/token"
 )
 
 type submitAttemptRequest struct {
-	UserID            int64           `json:"user_id" binding:"required"`
 	DictationID       int64           `json:"dictation_id" binding:"required"`
 	TypedText         string          `json:"typed_text"`
-	AttemptNo         int32           `json:"attempt_no"`
+	TimeSpent         float64         `json:"time_spent"`
+    // Optional / Calculated server-side fields
 	TotalWords        int32           `json:"total_words"`
 	CorrectWords      int32           `json:"correct_words"`
 	GrammaticalErrors int32           `json:"grammatical_errors"`
@@ -24,7 +27,6 @@ type submitAttemptRequest struct {
 	CaseErrors        int32           `json:"case_errors"`
 	Accuracy          float64         `json:"accuracy"`
 	ComparisonData    json.RawMessage `json:"comparison_data"`
-	TimeSpent         float64         `json:"time_spent"`
 }
 
 type attemptResponse struct {
@@ -53,16 +55,64 @@ func (server *Server) submitAttempt(ctx *gin.Context) {
 		return
 	}
 
+	// Fetch original dictation for verification
+    dictation, err := server.store.GetDictation(ctx, req.DictationID)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            ctx.JSON(http.StatusNotFound, errorResponse(fmt.Errorf("dictation not found")))
+            return
+        }
+        ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+        return
+    }
+
+    // Server-side calculation
+    originalText := dictation.Content.String
+    typedText := req.TypedText
+
+    originalWords := strings.Fields(originalText)
+    typedWords := strings.Fields(typedText)
+    
+    totalWords := int32(len(originalWords))
+    correctWords := int32(0)
+    
+    // Simple verification algorithm: Word-by-word match
+    // Note: This is a basic comparison. For more advanced diffing (insertions/deletions),
+    // we would need a diff library (e.g. sergi/go-diff), but this suffices for exact matching verification.
+    limit := len(originalWords)
+    if len(typedWords) < limit {
+        limit = len(typedWords)
+    }
+
+    for i := 0; i < limit; i++ {
+        // Case-insensitive comparison could be used, but strict typing usually requires exact case
+        if originalWords[i] == typedWords[i] {
+            correctWords++
+        }
+    }
+    
+    // Calculate accuracy
+    accuracy := float64(0)
+    if totalWords > 0 {
+        accuracy = (float64(correctWords) / float64(totalWords)) * 100
+    }
+
+    // Simplified error category estimation (can be improved with proper diffing later)
+    errors := totalWords - correctWords
+    
+    // Get UserID from auth payload
+    authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
 	arg := db.CreateAttemptsParams{
-		UserID:            sql.NullInt64{Int64: req.UserID, Valid: true},
+		UserID:            sql.NullInt64{Int64: authPayload.UserID, Valid: true},
 		DictationID:       sql.NullInt64{Int64: req.DictationID, Valid: true},
 		TypedText:         sql.NullString{String: req.TypedText, Valid: true},
-		TotalWords:        sql.NullInt32{Int32: req.TotalWords, Valid: true},
-		CorrectWords:      sql.NullInt32{Int32: req.CorrectWords, Valid: true},
-		GrammaticalErrors: sql.NullInt32{Int32: req.GrammaticalErrors, Valid: true},
-		SpellingErrors:    sql.NullInt32{Int32: req.SpellingErrors, Valid: true},
-		CaseErrors:        sql.NullInt32{Int32: req.CaseErrors, Valid: true},
-		Accuracy:          sql.NullFloat64{Float64: req.Accuracy, Valid: true},
+		TotalWords:        sql.NullInt32{Int32: totalWords, Valid: true},
+		CorrectWords:      sql.NullInt32{Int32: correctWords, Valid: true},
+		GrammaticalErrors: sql.NullInt32{Int32: 0, Valid: true}, // Placeholder
+		SpellingErrors:    sql.NullInt32{Int32: errors, Valid: true}, // Lump all errors here for now
+		CaseErrors:        sql.NullInt32{Int32: 0, Valid: true}, // Placeholder
+		Accuracy:          sql.NullFloat64{Float64: accuracy, Valid: true},
 		ComparisonData:    pqtype.NullRawMessage{RawMessage: req.ComparisonData, Valid: len(req.ComparisonData) > 0},
 		TimeSpent:         sql.NullFloat64{Float64: req.TimeSpent, Valid: true},
 	}
@@ -125,4 +175,48 @@ func (server *Server) listAttempts(ctx *gin.Context) {
 
 	// Simplifying response for list (lightweight)
 	ctx.JSON(http.StatusOK, attempts)
+}
+
+type getAttemptRequest struct {
+	ID int64 `uri:"id" binding:"required,min=1"`
+}
+
+func (server *Server) getAttempt(ctx *gin.Context) {
+	var req getAttemptRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	attempt, err := server.store.GetAttemptById(ctx, req.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+    // Security check: Ensure the attempt belongs to the user
+    authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+    if attempt.UserID.Int64 != authPayload.UserID {
+        err := fmt.Errorf("account doesn't belong to the authenticated user")
+        ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+        return
+    }
+
+    // Construct response
+	rsp := attemptResponse{
+		ID:          attempt.ID,
+		UserID:      attempt.UserID.Int64,
+		DictationID: attempt.DictationID.Int64,
+		TypedText:   attempt.TypedText.String,
+		AttemptNo:   attempt.AttemptNo.Int32,
+		Accuracy:    attempt.Accuracy.Float64,
+		TimeSpent:   attempt.TimeSpent.Float64,
+		CreatedAt:   attempt.CreatedAt.Time,
+	}
+
+	ctx.JSON(http.StatusOK, rsp)
 }

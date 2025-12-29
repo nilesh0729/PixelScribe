@@ -66,7 +66,7 @@ func TestSubmitAttempt(t *testing.T) {
 				"time_spent":         10.5,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+				addAuthorization(t, request, tokenMaker, "bearer", user.ID, user.Username, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				arg := db.CreateAttemptsParams{

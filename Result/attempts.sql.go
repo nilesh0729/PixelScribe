@@ -131,18 +131,11 @@ func (q *Queries) DeleteAttemptsByDictation(ctx context.Context, arg DeleteAttem
 
 const getAttemptById = `-- name: GetAttemptById :one
 SELECT id, user_id, dictation_id, typed_text, attempt_no, total_words, correct_words, grammatical_errors, spelling_errors, case_errors, accuracy, comparison_data, time_spent, created_at FROM attempts
-WHERE user_id = $1
-    AND dictation_id = $2 
-LIMIT 1
+WHERE id = $1 LIMIT 1
 `
 
-type GetAttemptByIdParams struct {
-	UserID      sql.NullInt64 `json:"user_id"`
-	DictationID sql.NullInt64 `json:"dictation_id"`
-}
-
-func (q *Queries) GetAttemptById(ctx context.Context, arg GetAttemptByIdParams) (Attempt, error) {
-	row := q.db.QueryRowContext(ctx, getAttemptById, arg.UserID, arg.DictationID)
+func (q *Queries) GetAttemptById(ctx context.Context, id int64) (Attempt, error) {
+	row := q.db.QueryRowContext(ctx, getAttemptById, id)
 	var i Attempt
 	err := row.Scan(
 		&i.ID,

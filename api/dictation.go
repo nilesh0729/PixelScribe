@@ -7,16 +7,23 @@ import (
 
 	"github.com/gin-gonic/gin"
 	db "github.com/nilesh0729/PixelScribe/Result"
+	"github.com/nilesh0729/PixelScribe/token"
 )
 
 type createDictationRequest struct {
-	UserID   int64  `json:"user_id" binding:"required"`
+	UserID   int64  `json:"user_id"`
 	Title    string `json:"title" binding:"required"`
 	Type     string `json:"type" binding:"required,oneof=text audio"`
 	Content  string `json:"content"`   // Required for text
 	AudioURL string `json:"audio_url"` // Required for audio
 	Language string `json:"language" binding:"required"`
 }
+// ... func newDictationResponse ...
+// ... func createDictation ... (will be replaced in next call or same call if contiguous)
+
+// Actually I can only replace one contiguous block. 
+// The structs are far apart. I will do them separately or use multi_replace.
+// I'll use multi_replace to be efficient.
 
 type dictationResponse struct {
 	ID        int64     `json:"id"`
@@ -49,8 +56,14 @@ func (server *Server) createDictation(ctx *gin.Context) {
 		return
 	}
 
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	user, err := server.store.GetUsers(ctx, authPayload.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
 	var dictation db.Dictation
-	var err error
 
 	if req.Type == "text" {
 		if req.Content == "" {
@@ -58,7 +71,7 @@ func (server *Server) createDictation(ctx *gin.Context) {
 			return
 		}
 		arg := db.CreateTextDictationsParams{
-			UserID:   sql.NullInt64{Int64: req.UserID, Valid: true},
+			UserID:   sql.NullInt64{Int64: user.ID, Valid: true},
 			Title:    sql.NullString{String: req.Title, Valid: true},
 			Content:  sql.NullString{String: req.Content, Valid: true},
 			Language: sql.NullString{String: req.Language, Valid: true},
@@ -70,7 +83,7 @@ func (server *Server) createDictation(ctx *gin.Context) {
 			return
 		}
 		arg := db.CreateAudioDictationsParams{
-			UserID:   sql.NullInt64{Int64: req.UserID, Valid: true},
+			UserID:   sql.NullInt64{Int64: user.ID, Valid: true},
 			Title:    sql.NullString{String: req.Title, Valid: true},
 			AudioUrl: sql.NullString{String: req.AudioURL, Valid: true},
 			Language: sql.NullString{String: req.Language, Valid: true},
@@ -87,7 +100,7 @@ func (server *Server) createDictation(ctx *gin.Context) {
 }
 
 type listDictationsRequest struct {
-	UserID int64  `form:"user_id" binding:"required"`
+	UserID int64  `form:"user_id"`
 	Type   string `form:"type" binding:"omitempty,oneof=text audio"`
 }
 
@@ -98,8 +111,14 @@ func (server *Server) listDictations(ctx *gin.Context) {
 		return
 	}
 
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	user, err := server.store.GetUsers(ctx, authPayload.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
 	var dictations []db.Dictation
-	var err error
 
 	// Note: Generated queries are split by type: ListTextDictations, ListAudioDictations
 	// Or ListDictationsByUser.
@@ -110,11 +129,11 @@ func (server *Server) listDictations(ctx *gin.Context) {
 	// ListDictationsByUser(ctx, userID)
 
 	if req.Type == "text" {
-		dictations, err = server.store.ListTextDictations(ctx, sql.NullInt64{Int64: req.UserID, Valid: true})
+		dictations, err = server.store.ListTextDictations(ctx, sql.NullInt64{Int64: user.ID, Valid: true})
 	} else if req.Type == "audio" {
-		dictations, err = server.store.ListAudioDictations(ctx, sql.NullInt64{Int64: req.UserID, Valid: true})
+		dictations, err = server.store.ListAudioDictations(ctx, sql.NullInt64{Int64: user.ID, Valid: true})
 	} else {
-		dictations, err = server.store.ListDictationsByUser(ctx, sql.NullInt64{Int64: req.UserID, Valid: true})
+		dictations, err = server.store.ListDictationsByUser(ctx, sql.NullInt64{Int64: user.ID, Valid: true})
 	}
 
 	if err != nil {

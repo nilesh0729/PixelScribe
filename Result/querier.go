@@ -23,7 +23,8 @@ type Querier interface {
 	DeletePerformanceSummary(ctx context.Context, id int64) error
 	DeleteSetting(ctx context.Context, id int64) error
 	DeleteUsers(ctx context.Context, username string) error
-	GetAttemptById(ctx context.Context, arg GetAttemptByIdParams) (Attempt, error)
+	GetAttemptById(ctx context.Context, id int64) (Attempt, error)
+	GetDictation(ctx context.Context, id int64) (Dictation, error)
 	GetDictationsByTitle(ctx context.Context, title sql.NullString) (Dictation, error)
 	GetLatestAttempt(ctx context.Context, arg GetLatestAttemptParams) (Attempt, error)
 	GetPerformanceSummaryByID(ctx context.Context, id int64) (PerformanceSummary, error)

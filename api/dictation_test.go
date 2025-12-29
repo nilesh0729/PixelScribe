@@ -35,7 +35,7 @@ func TestDeleteDictation(t *testing.T) {
 			name:        "OK",
 			dictationID: dictationID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+				addAuthorization(t, request, tokenMaker, "bearer", user.ID, user.Username, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -51,7 +51,7 @@ func TestDeleteDictation(t *testing.T) {
 			name:        "InternalError",
 			dictationID: dictationID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+				addAuthorization(t, request, tokenMaker, "bearer", user.ID, user.Username, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -67,7 +67,7 @@ func TestDeleteDictation(t *testing.T) {
 			name:        "InvalidID",
 			dictationID: 0, 
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+				addAuthorization(t, request, tokenMaker, "bearer", user.ID, user.Username, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				// No calls expected
@@ -132,7 +132,7 @@ func TestCreateDictation(t *testing.T) {
 				"language": "en-US",
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+				addAuthorization(t, request, tokenMaker, "bearer", user.ID, user.Username, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				arg := db.CreateTextDictationsParams{

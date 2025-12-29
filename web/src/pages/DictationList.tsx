@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { dictationService } from '../services/dictation';
 import type { Dictation } from '../types/dictation';
-import { unwrap } from '../types/common';
+
 import { Plus, Trash2, FileText, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -82,15 +82,15 @@ export default function DictationList() {
                                     <div className="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
                                         <div className="truncate">
                                             <div className="flex text-sm">
-                                                <p className="font-medium text-indigo-600 truncate">{unwrap(dictation.title, 'String', 'Untitled')}</p>
+                                                <p className="font-medium text-indigo-600 truncate">{dictation.title || 'Untitled'}</p>
                                                 <p className="ml-1 flex-shrink-0 font-normal text-gray-500">
-                                                    in {unwrap(dictation.type, 'String', 'General')}
+                                                    in {dictation.type || 'General'}
                                                 </p>
                                             </div>
                                             <div className="mt-2 flex">
                                                 <div className="flex items-center text-sm text-gray-500">
                                                     <p className="truncate">
-                                                        {unwrap(dictation.content, 'String', '').substring(0, 100)}...
+                                                        {(dictation.content || '').substring(0, 100)}...
                                                     </p>
                                                 </div>
                                             </div>

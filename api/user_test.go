@@ -30,7 +30,7 @@ func TestGetUser(t *testing.T) {
 			name:     "OK",
 			username: user.Username,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+				addAuthorization(t, request, tokenMaker, "bearer", user.ID, user.Username, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -47,7 +47,7 @@ func TestGetUser(t *testing.T) {
 			name:     "NotFound",
 			username: "NotFoundUser",
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+				addAuthorization(t, request, tokenMaker, "bearer", user.ID, user.Username, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -63,7 +63,7 @@ func TestGetUser(t *testing.T) {
 			name:     "InternalError",
 			username: user.Username,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, "bearer", user.Username, time.Minute)
+				addAuthorization(t, request, tokenMaker, "bearer", user.ID, user.Username, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
