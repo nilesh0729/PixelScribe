@@ -82,6 +82,15 @@ func TestSubmitAttempt(t *testing.T) {
 					ComparisonData:    pqtype.NullRawMessage{RawMessage: json.RawMessage("[]"), Valid: true},
 					TimeSpent:         sql.NullFloat64{Float64: 10.5, Valid: true},
 				}
+				// Mock GetDictation call
+				store.EXPECT().
+					GetDictation(gomock.Any(), gomock.Eq(int64(1))).
+					Times(1).
+					Return(db.Dictation{
+						ID:       1,
+						Content:  sql.NullString{String: "Hello world", Valid: true},
+					}, nil)
+				// Mock SubmitAttemptTx call
 				store.EXPECT().
 					SubmitAttemptTx(gomock.Any(), gomock.Eq(arg)).
 					Times(1).

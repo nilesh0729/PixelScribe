@@ -141,6 +141,12 @@ func TestCreateDictation(t *testing.T) {
 					Content:  sql.NullString{String: "Content", Valid: true},
 					Language: sql.NullString{String: "en-US", Valid: true},
 				}
+				// Mock GetUsers call to fetch user ID
+				store.EXPECT().
+					GetUsers(gomock.Any(), gomock.Eq(user.Username)).
+					Times(1).
+					Return(user, nil)
+				// Mock CreateTextDictations call
 				store.EXPECT().
 					CreateTextDictations(gomock.Any(), gomock.Eq(arg)).
 					Times(1).
