@@ -78,7 +78,7 @@ export default function Dashboard() {
                             <div className="ml-5 w-0 flex-1">
                                 <dl>
                                     <dt className="text-sm font-medium text-gray-500 truncate">Avg. Accuracy</dt>
-                                    <dd className="text-lg font-medium text-gray-900">{avgAccuracy.toFixed(1)}%</dd>
+                                    <dd className="text-lg font-medium text-gray-900">{Number(avgAccuracy || 0).toFixed(1)}%</dd>
                                 </dl>
                             </div>
                         </div>
@@ -94,7 +94,7 @@ export default function Dashboard() {
                             <div className="ml-5 w-0 flex-1">
                                 <dl>
                                     <dt className="text-sm font-medium text-gray-500 truncate">Best Accuracy</dt>
-                                    <dd className="text-lg font-medium text-gray-900">{bestAccuracyEver.toFixed(1)}%</dd>
+                                    <dd className="text-lg font-medium text-gray-900">{Number(bestAccuracyEver || 0).toFixed(1)}%</dd>
                                 </dl>
                             </div>
                         </div>
@@ -132,7 +132,7 @@ export default function Dashboard() {
                                         <div className="flex items-center">
                                             <div className="flex flex-col items-end">
                                                 <p className="text-sm font-medium text-gray-900">
-                                                    {(item.average_accuracy || 0).toFixed(1)}% Acc
+                                                    {Number(item.average_accuracy || 0).toFixed(1)}% Acc
                                                 </p>
                                                 <p className="text-xs text-gray-500 mt-1">
                                                     {item.total_attempts || 0} attempts

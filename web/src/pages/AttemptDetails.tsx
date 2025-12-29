@@ -3,7 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { attemptService, type AttemptResponse } from '../services/attempt';
 import { dictationService } from '../services/dictation';
 import type { Dictation } from '../types/dictation';
+// Safe import for diff which handles both ESM and CommonJS in Vite
 import * as Diff from 'diff';
+const diffWords = (Diff as any).default?.diffWords || Diff.diffWords;
 import { Loader2, ArrowLeft, Calendar, FileText, CheckCircle, Clock } from 'lucide-react';
 
 export default function AttemptDetails() {
@@ -31,7 +33,7 @@ export default function AttemptDetails() {
                     // valid logic: diffWords(original, typed)
                     // added: true -> present in typed but NOT in original (Extra/Wrong word) -> Red
                     // removed: true -> present in original but NOT in typed (Missed word) -> Green (or Strikeout)
-                    const differences = Diff.diffWords(matchedDictation.content, attemptData.typed_text, { ignoreCase: true });
+                    const differences = diffWords(matchedDictation.content, attemptData.typed_text, { ignoreCase: true });
                     setDiffParts(differences);
                 }
 

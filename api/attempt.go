@@ -159,13 +159,19 @@ func (server *Server) listAttempts(ctx *gin.Context) {
 	var attempts []db.Attempt
 	var err error
 
+	// Get authenticated user
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
 	if req.DictationID != 0 {
 		attempts, err = server.store.ListAttemptsByDictation(ctx, sql.NullInt64{Int64: req.DictationID, Valid: true})
-	} else if req.UserID != 0 {
-		attempts, err = server.store.ListAttemptsByUser(ctx, sql.NullInt64{Int64: req.UserID, Valid: true})
 	} else {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "user_id or dictation_id required"})
-		return
+		// Default to authenticated user if no specific user requested (or if specific user requested, we could enforce permissions)
+		// For now, let's just use the requested user OR the authenticated user
+		targetUserID := req.UserID
+		if targetUserID == 0 {
+			targetUserID = authPayload.UserID
+		}
+		attempts, err = server.store.ListAttemptsByUser(ctx, sql.NullInt64{Int64: targetUserID, Valid: true})
 	}
 
 	if err != nil {
@@ -174,7 +180,20 @@ func (server *Server) listAttempts(ctx *gin.Context) {
 	}
 
 	// Simplifying response for list (lightweight)
-	ctx.JSON(http.StatusOK, attempts)
+	var rsp []attemptResponse
+	for _, attempt := range attempts {
+		rsp = append(rsp, attemptResponse{
+			ID:          attempt.ID,
+			UserID:      attempt.UserID.Int64,
+			DictationID: attempt.DictationID.Int64,
+			TypedText:   attempt.TypedText.String,
+			AttemptNo:   attempt.AttemptNo.Int32,
+			Accuracy:    attempt.Accuracy.Float64,
+			TimeSpent:   attempt.TimeSpent.Float64,
+			CreatedAt:   attempt.CreatedAt.Time,
+		})
+	}
+	ctx.JSON(http.StatusOK, rsp)
 }
 
 type getAttemptRequest struct {

@@ -21,10 +21,10 @@ export default function AttemptHistory() {
 
                 // Create a map of dictations for easy lookup
                 const dictMap: Record<number, Dictation> = {};
-                dictationsData.forEach(d => dictMap[d.id] = d);
+                (dictationsData || []).forEach(d => dictMap[d.id] = d);
                 setDictations(dictMap);
 
-                setAttempts(attemptsData);
+                setAttempts(attemptsData || []);
             } catch (error) {
                 console.error("Failed to load history", error);
             } finally {
