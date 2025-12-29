@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nilesh0729/PixelScribe/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,12 +39,13 @@ func createRandomSetting(t *testing.T, userID int64) Setting {
 }
 
 func TestCreateSetting(t *testing.T) {
-	userID := int64(1) // or create a random user ID if needed
-	createRandomSetting(t, userID)
+	user := RandomUser(t)
+	createRandomSetting(t, user.ID)
 }
 
 func TestGetSettingByID(t *testing.T) {
-	setting1 := createRandomSetting(t, 1)
+	user := RandomUser(t)
+	setting1 := createRandomSetting(t, user.ID)
 	setting2, err := testQueries.GetSettingByID(context.Background(), setting1.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, setting2)
@@ -55,7 +55,8 @@ func TestGetSettingByID(t *testing.T) {
 }
 
 func TestGetSettingByUserID(t *testing.T) {
-	userID := sql.NullInt64{Int64: util.RandomInt(1,9), Valid: true}
+	user := RandomUser(t)
+	userID := sql.NullInt64{Int64: user.ID, Valid: true}
 	setting1 := createRandomSetting(t, userID.Int64)
 	setting2, err := testQueries.GetSettingByUserID(context.Background(), userID)
 	require.NoError(t, err)
@@ -66,7 +67,8 @@ func TestGetSettingByUserID(t *testing.T) {
 }
 
 func TestUpdateSetting(t *testing.T) {
-	setting1 := createRandomSetting(t, 1)
+	user := RandomUser(t)
+	setting1 := createRandomSetting(t, user.ID)
 
 	arg := UpdateSettingParams{
 		ID:                    setting1.ID,
@@ -89,7 +91,8 @@ func TestUpdateSetting(t *testing.T) {
 }
 
 func TestDeleteSetting(t *testing.T) {
-	setting := createRandomSetting(t, 1)
+	user := RandomUser(t)
+	setting := createRandomSetting(t, user.ID)
 	err := testQueries.DeleteSetting(context.Background(), setting.ID)
 	require.NoError(t, err)
 
