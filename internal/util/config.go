@@ -29,8 +29,15 @@ func LoadConfig(path string) (config Config, err error) {
 
 	err = viper.ReadInConfig()
 	if err != nil {
-		return
+		// Ignore file not found error - use environment variables instead
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			// It's a different error, return it
+			return
+		}
+		// File not found is OK - clear the error
+		err = nil
 	}
+	
 	err = viper.Unmarshal(&config)
 	return
 }
