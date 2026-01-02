@@ -27,6 +27,14 @@ func LoadConfig(path string) (config Config, err error) {
 	
 	// Enable automatic env variable reading
 	viper.AutomaticEnv()
+	
+	// Explicitly bind environment variables to config keys
+	viper.BindEnv("DB_DRIVER")
+	viper.BindEnv("DB_SOURCE")
+	viper.BindEnv("SERVER_ADDRESS")
+	viper.BindEnv("TOKEN_SYMMETRIC_KEY")
+	viper.BindEnv("ACCESS_TOKEN_DURATION")
+	viper.BindEnv("OPENAI_API_KEY")
 
 	// Try to read config file, but don't fail if it doesn't exist
 	_ = viper.ReadInConfig()  // Ignore all errors from file reading
