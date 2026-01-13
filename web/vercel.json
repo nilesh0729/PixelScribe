@@ -4,7 +4,10 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
-  "env": {
-    "VITE_API_URL": "https://your-backend.onrender.com"
-  }
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }

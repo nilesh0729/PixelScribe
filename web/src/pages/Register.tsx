@@ -22,8 +22,12 @@ export default function Register() {
 
         try {
             await register(formData);
-        } catch {
-            setError('Registration failed. Username or email might be taken.');
+        } catch (err: any) {
+            if (err.response && err.response.data && err.response.data.error) {
+                setError(err.response.data.error);
+            } else {
+                setError('Registration failed. Please try again or check your connection.');
+            }
         }
     };
 
